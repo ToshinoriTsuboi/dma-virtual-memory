@@ -50,20 +50,20 @@
 #endif
 #if !EXACT_SIZE_CLASS
 #  ifndef SIZE_CLASS_MAX
-#    define SIZE_CLASS_MAX 64
+#    define SIZE_CLASS_MAX 128
 #  endif
 #  ifndef BINARY_SEARCH_COUNT
-#    define BINARY_SEARCH_COUNT 6
+#    define BINARY_SEARCH_COUNT 7
 #  endif
 #  ifndef SIZE_CLASS_CONST
-#    define SIZE_CLASS_CONST 0.25
+#    define SIZE_CLASS_CONST 0.125
 #  endif
 #endif
 
 /* If this flag is set, fixed length integer(uint32_t) is used
    insteada of variable length integer. */
 #ifndef FIXED_LENGTH_INTEGER
-#  define FIXED_LENGTH_INTEGER 1
+#  define FIXED_LENGTH_INTEGER 0
 #endif
 
 /* vmf_main will be allocated at a multiple of MEMORY_ALIGN.
