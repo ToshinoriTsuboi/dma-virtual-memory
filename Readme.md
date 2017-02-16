@@ -1,4 +1,4 @@
-# Efficient dynamic memory allocators with virtual memory
+# Efficient Dynamic Memory Allocators with Virtual Memory
 
 `Multiheap-fit` and `Virtual Multiheap-fit` are space-saving dynamic
 memory allocators with virtual memory.
