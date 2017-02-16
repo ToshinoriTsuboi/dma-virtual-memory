@@ -65,7 +65,7 @@
 #  define FIXED_LENGTH_INTEGER 0
 #endif
 
-/* memory will be allocated at a multiple of MEMORY_ALIGN.
+/* Memory will be allocated at a multiple of MEMORY_ALIGN.
    This value should be a power of 2. */
 #ifndef MEMORY_ALIGN
 #  if FIXED_LENGTH_INTEGER
@@ -77,10 +77,10 @@
 
 /* MMAP default vlaue */
 #define PROT_DEFAULT (PROT_READ | PROT_WRITE)
-/* 1 byte num */
+/* number of bits of one byte */
 #define ONE_BYTE 8
 
-/* huristic parameter */
+/* Huristic parameter */
 #ifndef ENABLE_HEURISTIC
 #  define ENABLE_HEURISTIC 1
 #endif
@@ -97,55 +97,57 @@
 #  endif
 #endif
 
-/* a type used for passing positions of a pseudo heap */
+/* Type used for passing positions of a pseudo heap */
 typedef uint32_t offset_t;
-/* a type used for passing size classes  */
+/* Type used for passing size classes  */
 typedef uint32_t size_class_t;
-/* a type used for the number of bytes */
+/* Type used for the number of bytes */
 typedef uint_fast16_t bytenum_t;
 
 #define MF_MIN(x, y) ((x) < (y) ? (x) : (y))
 #define MF_INLINE static inline
 
+
 /* ========================================================================== */
 /* OS memory management wrapper */
 /* ========================================================================== */
-/** create anonymous mapping from addr to addr + size */
+/** Create anonymous mapping from addr to addr + size */
 MF_INLINE void safe_anon_mmap(void* addr, size_t size);
-/** destroy anonymous mapping from addr to addr + size */
+/** Destroy anonymous mapping from addr to addr + size */
 MF_INLINE void safe_zero_mmap(void* addr, size_t size);
-/** call 'malloc' and exit if 'malloc' is failed */
+/** Call 'malloc' and exit if 'malloc' is failed */
 MF_INLINE void* safe_malloc(size_t size);
+
 
 /* ========================================================================== */
 /* commonly used functions */
 /* ========================================================================== */
-/* calculate the number of bits to represent num */
+/** Calculate the number of bits to represent num */
 MF_INLINE bytenum_t required_bit(uint64_t num);
-/* calculate the number of bytes to represent num */
+/** Calculate the number of bytes to represent num */
 MF_INLINE bytenum_t required_byte(uint64_t num);
 
-/* page size of the system */
+/* Page size of the system */
 static size_t g_page_size = 0;
-/* used to round up g_page_size */
+/* Used to round up g_page_size */
 static size_t g_page_mask = 0;
-/* shift amount corresponding to g_page_size */
+/* Shift amount corresponding to g_page_size */
 static bytenum_t g_page_shift = 0;
-/* convert required heap size to the number of pages */
+/** Convert required heap size to the number of pages */
 MF_INLINE size_t length2page_num(size_t length);
-/* align up size to a multiple of MEMORY_ALIGN */
+/** Align up size to a multiple of MEMORY_ALIGN */
 MF_INLINE size_t align_up(size_t size);
 
 #if !FIXED_LENGTH_INTEGER
-/* read 'byte_num' bytes integer */
+/** Read 'byte_num' bytes integer */
 MF_INLINE uint64_t get_int(const void* input, bytenum_t byte_num);
-/* write 'byte_num' bytes integer */
+/** Write 'byte_num' bytes integer */
 MF_INLINE void put_int(void* output, bytenum_t byte_num, uint64_t input);
 #endif  /* FIXED_LENGTH_INTEGER */
-/* fast memcpy(expect compiler optimization) */
+/** Fast memcpy(expect compiler optimization) */
 MF_INLINE void my_memcpy(void* __restrict__ dst, const void* __restrict__ src,
     size_t size);
-/* (void*)((uint8_t*)addr + diff) */
+/** (void*)((uint8_t*)addr + diff) */
 MF_INLINE void* ptr_offset(void* addr, ptrdiff_t diff);
 
 
@@ -160,12 +162,13 @@ struct size_manager {
 static struct size_manager g_size_manager;
 #endif /* EXACT_SIZE_CLASS */
 
-/* initialize size_manager */
+/** Initialize size_manager */
 MF_INLINE void size_manager_init(void);
-/* convert size to size_class */
+/** Convert size to size_class */
 MF_INLINE size_t size2sc(size_t size);
-/* convert size_class to size */
+/** Convert size_class to size */
 MF_INLINE size_t sc2size(size_t size_class);
+
 
 /* ========================================================================== */
 /* pseudo_heap */
@@ -174,32 +177,33 @@ MF_INLINE size_t sc2size(size_t size_class);
 typedef struct {
   /* mmaped addr */
   void*  addr;
-  /* the number of mmaped pages */
+  /* The number of mmaped pages */
   uint32_t page_num;
 #if ENABLE_HEURISTIC
-  /* the number of not released pages */
+  /* The number of not released pages */
   uint32_t extra_num;
 #endif
 } pseudo_heap_t;
 
-/* reserve virtual memory space */
+/** Reserve virtual memory space */
 MF_INLINE void pheap_first_reserve(size_t max_nr);
-/* constructor */
+/** Constructor */
 MF_INLINE void pheap_init(pseudo_heap_t* pheap_ptr);
-/* destructor */
+/** Destructor */
 MF_INLINE void pheap_final(pseudo_heap_t* pheap_ptr);
-/* bluge the length of heap to new_sc(faster than 'pheap_resize') */
+/** Bluge the length of heap to new_sc(faster than 'pheap_resize') */
 MF_INLINE void pheap_bulge(pseudo_heap_t* pheap_ptr, size_t new_size);
-/* change the length of heap to new_sc(faster than 'pheap_resize') */
+/** Change the length of heap to new_sc(faster than 'pheap_resize') */
 MF_INLINE void pheap_shrink(pseudo_heap_t* pheap_ptr, size_t new_size);
-/* head address of pseudo heap */
+/** Head address of pseudo heap */
 MF_INLINE void* pheap_address(pseudo_heap_t* pheap_ptr);
-/* total using memory in pheap_ptr */
+/** Total using memory in pheap_ptr */
 MF_INLINE size_t pheap_using_mem(const pseudo_heap_t* pheap_ptr);
 #if ENABLE_HEURISTIC
-/* free extra reserved page */
+/** Free extra reserved page */
 MF_INLINE void pheap_delete_extra(pseudo_heap_t* pheap_ptr);
 #endif
+
 
 /* ========================================================================== */
 /* block_manager */
@@ -212,30 +216,31 @@ MF_INLINE void pheap_delete_extra(pseudo_heap_t* pheap_ptr);
  *  element addition.
  */
 typedef struct {
-  /* the number of memory blocks */
+  /* Number of memory blocks */
   size_t obj_num;
-  /* the size of memory blocks */
+  /* Size of memory blocks */
   size_t obj_size;
-  /* pseudo_heap to allocate memory blocks */
+  /* pseudo heap to allocate memory blocks */
   pseudo_heap_t pseudo_heap;
 } block_manager_t;
 
-/* constructor */
+/** Constructor */
 MF_INLINE block_manager_t* block_manager_init(size_t obj_size);
-/* destructor */
+/** Destructor */
 MF_INLINE void   block_manager_final(block_manager_t* bm_ptr);
-/* address of index-block */
+/** Address of index-block */
 MF_INLINE void*  block_manager_addr(block_manager_t* bm_ptr, size_t index);
-/* block_manager_addr(bm_ptr, bm_ptr->obj_num - 1) */
+/** Block_manager_addr(bm_ptr, bm_ptr->obj_num - 1) */
 MF_INLINE void*  block_manager_last_addr(block_manager_t* bm_ptr);
-/* append new memory block to tail */
+/** Append new memory block to tail */
 MF_INLINE size_t block_manager_append(block_manager_t* bm_ptr);
-/* remove tail memory block. */
+/** Remove tail memory block. */
 MF_INLINE void block_manager_remove(block_manager_t* bm_ptr);
-/* get obj_num */
+/** Get obj_num */
 MF_INLINE size_t block_manager_obj_num(block_manager_t* bm_ptr);
-/* total using memory in bm_ptr */
+/** Total using memory in bm_ptr */
 MF_INLINE size_t block_manager_using_mem(const block_manager_t* bm_ptr);
+
 
 /* ========================================================================== */
 /* block_info */
@@ -264,63 +269,63 @@ typedef struct elem_info {
 #endif /* FIXED_LENGTH_INTEGER */
 
 typedef struct {
-  /* max number of blocks */
+  /* Max number of blocks */
   blockid_t  nr_max;
 
 #if FIXED_LENGTH_INTEGER
-  /* data region */
+  /* Data region */
   elem_info_t* data_addr;
 #else  /* FIXED_LENGTH_INTEGER */
-  /* data region */
+  /* Data region */
   void* data_addr;
   /* ELEM_INFO_SIZE(l, o) */
   size_t block_size;
-  /* byte num to represent 'length' */
+  /* Byte num to represent 'length' */
   bytenum_t  sc_byte;  /* l */
-  /* byte num to represent 'offset' */
+  /* Byte num to represent 'offset' */
   bytenum_t  ofs_byte;  /* o */
 #endif /* FIXED_LENGTH_INTEGER */
 } block_info_t;
 
-/* constructor */
+/** Constructor */
 #if FIXED_LENGTH_INTEGER
 MF_INLINE block_info_t* block_info_init(blockid_t element_nr_max);
 #else /* FIXED_LENGTH_INTEGER */
 MF_INLINE block_info_t* block_info_init(bytenum_t offset_byte,
     bytenum_t length_byte, blockid_t element_nr_max);
 #endif /* FIXED_LENGTH_INTEGER */
-/* destructor */
+/** Destructor */
 MF_INLINE void block_info_final(block_info_t* block_info_ptr);
-/* read offset of the id-block */
+/** Read offset of the id-block */
 MF_INLINE offset_t block_info_get_offset(
     const block_info_t* block_info_ptr, blockid_t id);
-/* write offset of the id-block */
+/** Write offset of the id-block */
 MF_INLINE void block_info_put_offset(block_info_t* block_info_ptr,
     blockid_t id, offset_t ofs);
-/* read length of the id-block */
+/** Read length of the id-block */
 MF_INLINE size_class_t block_info_get_sc(
     const block_info_t* block_info_ptr, blockid_t id);
-/* write length of the id-block */
+/** Write length of the id-block */
 MF_INLINE void block_info_put_sc(block_info_t* block_info_ptr,
     blockid_t id, size_class_t sc);
-/* write length and offset of the id-block */
+/** Write length and offset of the id-block */
 MF_INLINE void block_info_put_sc_and_ofs(block_info_t* block_info_ptr,
     blockid_t id, size_class_t sc, offset_t ofs);
-/* total using memory in block_info_ptr */
+/** Total using memory in block_info_ptr */
 MF_INLINE size_t block_info_using_mem(const block_info_t* block_info_ptr);
+
 
 /* ========================================================================== */
 /* main structure */
 /* ========================================================================== */
 typedef struct {
-  /* 確保できるメモリの最小値 */
-  /* min size of allocated memory */
+  /* Min size of allocated memory */
   size_class_t  sc_min;
-  /* max size of allocated memory */
+  /* Max size of allocated memory */
   size_class_t  sc_max;
-  /* max number of memory blocks */
+  /* Max number of memory blocks */
   blockid_t elem_nr_max;
-  /* max total allocated size */
+  /* Max total allocated size */
   offset_t  max_byte;
   /* Structure containing information necessary for each block */
   block_info_t* block_info_ptr;
@@ -328,11 +333,11 @@ typedef struct {
   block_manager_t** block_managers;
 
 #if !FIXED_LENGTH_INTEGER
-  /* id byte to represent 'bid' */
+  /* ID byte to represent 'bid' */
   bytenum_t  id_byte;
-  /* byte num to represent 'offset' */
+  /* Byte num to represent 'offset' */
   bytenum_t ofs_byte;
-  /* byte num to represent 'length' */
+  /* Byte num to represent 'length' */
   bytenum_t sc_byte;
 #endif /* FIXED_LENGTH_INTEGER */
 } mf_main_t;
@@ -342,9 +347,8 @@ typedef struct {
 /* OS memory management wrapper */
 /* ========================================================================== */
 
-#define PROT_DEFAULT (PROT_READ | PROT_WRITE)
 MF_INLINE void safe_anon_mmap(void* addr, size_t size) {
-  void* ret_addr = mmap64(addr, size, PROT_DEFAULT,
+  void* ret_addr = mmap64(addr, size, PROT_READ | PROT_WRITE,
       MAP_PRIVATE | MAP_ANONYMOUS | MAP_FIXED, -1, 0);
   if (ret_addr == MAP_FAILED) {
     perror("mmap64(anon)");
@@ -369,6 +373,7 @@ MF_INLINE void* safe_malloc(size_t size) {
   }
   return addr;
 }
+
 
 /* ========================================================================== */
 /* commonly used functions */
@@ -412,6 +417,7 @@ MF_INLINE uint64_t get_int(const void* input, bytenum_t byte_num) {
   bytenum_t i;
   const uint8_t* in_u8 = (const uint8_t*) input;
 
+#if ENABLE_HEURISTIC
   if (byte_num == 1) {
     return in_u8[0];
   } else if (byte_num == 2) {
@@ -420,7 +426,9 @@ MF_INLINE uint64_t get_int(const void* input, bytenum_t byte_num) {
     return (in_u8[0] << 16) | (in_u8[1] << 8) | in_u8[2];
   } else if (byte_num == 4) {
     return (in_u8[0] << 24) | (in_u8[1] << 16) | (in_u8[2] << 8) | in_u8[3];
-  } else {
+  } else
+#endif /* ENABLE_HEURISTIC */
+  {
     for (i = 0; i < byte_num; ++i) {
       ret = (ret << 8) | *in_u8++;
     }
@@ -432,6 +440,7 @@ MF_INLINE void put_int(void* output, bytenum_t byte_num, uint64_t input) {
   bytenum_t i;
   uint8_t* out_u8 = (uint8_t*) output + (bytenum_t)(byte_num - 1);
 
+#if ENABLE_HEURISTIC
   if (byte_num == 1) {
     *out_u8 = input & 0xff;
   } else if (byte_num == 2) {
@@ -446,7 +455,9 @@ MF_INLINE void put_int(void* output, bytenum_t byte_num, uint64_t input) {
     *out_u8-- = input & 0xff;  input >>= 8;
     *out_u8-- = input & 0xff;  input >>= 8;
     *out_u8   = input & 0xff;
-  } else {
+  } else
+#endif /* ENABLE_HEURISTIC */
+  {
     for (i = 0; i < byte_num; ++i) {
       *out_u8-- = input & 0xff;
       input >>= 8;
@@ -467,6 +478,7 @@ MF_INLINE void my_memcpy(void* __restrict__ dst, const void *__restrict__ src, s
 MF_INLINE void* ptr_offset(void* addr, ptrdiff_t diff) {
   return (void*)((uint8_t*)addr + diff);
 }
+
 
 /* ========================================================================== */
 /* size_class */
@@ -517,91 +529,92 @@ MF_INLINE size_t sc2size(size_t size_class) {
 #endif /* EXACT_SIZE_CLASS */
 }
 
+
 /* ========================================================================== */
 /* pseudo_heap */
 /* ========================================================================== */
 
 #if ENABLE_HEURISTIC
-/* heaper to manipulate unused pseudo_heap */
+/* Heaper to manipulate unused pseudo_heap */
 struct pool_header {
-  /* previous pool header */
+  /* Previous pool header */
   struct pool_header* prev;
-  /* next pool header */
+  /* Next pool header */
   struct pool_header* next;
-  /* the number of allocated pages. */
+  /* The number of allocated pages. */
   size_t page_num;
 };
 
-/* header to manipulate unused page */
+/* Header to manipulate unused page */
 struct garbage_header {
-  /* previous garbage header */
+  /* Previous garbage header */
   struct garbage_header* prev;
-  /* next garbage header */
+  /* Next garbage header */
   struct garbage_header* next;
-  /* the pseudo_heap which administrates this garbage */
+  /* The pseudo_heap which administrates this garbage */
   pseudo_heap_t* pseudo_heap;
-  /* the number of garbage pages */
+  /* The number of garbage pages */
   size_t page_num;
 };
 #endif /* ENABLE_HEURISTIC */
 
 /* This structure is used to reserve and manage virtual memory spaces. */
 struct virt_space {
-  /* head addreses of reserved virturl memory space for pseudo_heap */
+  /* Head addreses of reserved virturl memory space for pseudo_heap */
   void** addrs;
-  /* the size reserved first */
+  /* The size reserved first */
   size_t reserved_size;
-  /* the number of addresses in addrs */
+  /* The number of addresses in addrs */
   size_t addr_nr;
-  /* max size of pseudo_heap */
+  /* Max size of pseudo_heap */
   size_t size_per_space;
 
 #if ENABLE_HEURISTIC
   /* pool_header list(centinel) */
   struct pool_header pool_head_buf[2];
-  /* pool header list */
+  /* Pool header list */
   struct pool_header* pool_centinel;
-  /* total pool page num */
+  /* Total pool page num */
   size_t pool_num;
 
-  /* garbage_header list(centinel) */
+  /* Garbage_header list(centinel) */
   struct garbage_header garbage_head_buf[2];
-  /* garbage header list */
+  /* Garbage header list */
   struct garbage_header* garbage_centinel;
-  /* total garbage page num */
+  /* Total garbage page num */
   size_t garbage_num;
 #endif /* ENABLE_HEURISTIC */
 
-  /* head addr reserved for the first time */
+  /* Head addr reserved for the first time */
   void* addr_start;
-  /* max number of pseudo_heap structures */
+  /* Max number of pseudo_heap structures */
   size_t max_nr;
 
-  /* the flag which represents initialized or not */
+  /* The flag which represents initialized or not */
   bool initialized;
 };
 
 static struct virt_space g_virt_space = {.initialized = false};
-/* finalize g_virt_space */
+/** Finalize g_virt_space */
 MF_INLINE void virt_space_final(void);
 
 #if ENABLE_HEURISTIC
 #define IS_POOL_EMPTY() \
   (g_virt_space.pool_centinel->next == g_virt_space.pool_centinel->prev)
 
-/* insert pool */
+/** Insert pool */
 MF_INLINE void pool_push(struct pool_header* inserted);
-/* pop pool */
+/** Pop pool */
 MF_INLINE struct pool_header* pool_top(void);
-/* get total size of pool */
+/** Get total size of pool */
 MF_INLINE size_t pool_get_size(void);
-/* insert garbage */
+/** Insert garbage */
 MF_INLINE void garbage_push(struct garbage_header* inserted);
-/* remove garbage */
+/** Remove garbage */
 MF_INLINE void garbage_remove(struct garbage_header* removed);
-/* remove and deallocate garbage */
+/** Remove and deallocate garbage */
 MF_INLINE void garbage_delete(struct garbage_header* deleted);
-/* get total size of pool */
+/** Get total size of pool */
 MF_INLINE size_t garbage_get_size(void);
 #endif /* ENABLE_HEURISTIC */
 
@@ -954,6 +967,7 @@ MF_INLINE size_t block_manager_using_mem(const block_manager_t* bm_ptr) {
   return ret_size;
 }
 
+
 /* ========================================================================== */
 /* block_info */
 /* ========================================================================== */
@@ -1087,6 +1101,7 @@ MF_INLINE const void* elem_block_addr_c(const block_info_t* elem_info,
   return (const uint8_t*)elem_info->data_addr + elem_info->block_size * id;
 }
 #endif /* FIXED_LENGTH_INTEGER */
+
 
 /* ========================================================================== */
 /* main structure */
