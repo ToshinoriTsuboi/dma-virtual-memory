@@ -19,7 +19,14 @@
   IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
   CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-#define _GNU_SOURCE
+#ifndef __GNUC__
+#  warning We have not tested with compilers other than GCC
+#endif /* __GNUC__ */
+
+#ifdef __linux__
+#  define _GNU_SOURCE
+#endif
+
 #include <assert.h>
 #include <math.h>
 #include <stdio.h>
@@ -34,6 +41,12 @@
 #include <sys/mman.h>
 
 #include "multiheap_fit.h"
+
+#ifdef _GNU_SOURCE
+#  define MMAP_WRAPPER(...) mmap64(__VA_ARGS__)
+#else
+#  define MMAP_WRAPPER(...) mmap(__VA_ARGS__)
+#endif
 
 /* If COPYLESS is set, block copying is omitted in 'mf_dereference' */
 #ifndef COPYLESS
@@ -75,8 +88,6 @@
 #  endif
 #endif
 
-/* MMAP default vlaue */
-#define PROT_DEFAULT (PROT_READ | PROT_WRITE)
 /* number of bits of one byte */
 #define ONE_BYTE 8
 
@@ -348,19 +359,19 @@ typedef struct {
 /* ========================================================================== */
 
 MF_INLINE void safe_anon_mmap(void* addr, size_t size) {
-  void* ret_addr = mmap64(addr, size, PROT_READ | PROT_WRITE,
+  void* ret_addr = MMAP_WRAPPER(addr, size, PROT_READ | PROT_WRITE,
       MAP_PRIVATE | MAP_ANONYMOUS | MAP_FIXED, -1, 0);
   if (ret_addr == MAP_FAILED) {
-    perror("mmap64(anon)");
+    perror("MMAP_WRAPPER(anon)");
     exit(EXIT_FAILURE);
   }
 }
 
 MF_INLINE void safe_zero_mmap(void* addr, size_t size) {
-  void* ret_addr = mmap64(addr, size, PROT_NONE,
+  void* ret_addr = MMAP_WRAPPER(addr, size, PROT_NONE,
     MAP_PRIVATE | MAP_ANONYMOUS | MAP_FIXED | MAP_NORESERVE, -1, 0);
   if (ret_addr == MAP_FAILED) {
-    perror("mmap64(zero)");
+    perror("MMAP_WRAPPER(zero)");
     exit(EXIT_FAILURE);
   }
 }
@@ -642,17 +653,17 @@ MF_INLINE void pheap_first_reserve(size_t max_nr) {
 
   mmap_size = g_page_size << 1;
   /* reserve virtual memory as much as possible */
-  addr = mmap64(0, mmap_size, PROT_NONE,
+  addr = MMAP_WRAPPER(0, mmap_size, PROT_NONE,
     MAP_PRIVATE | MAP_ANONYMOUS | MAP_NORESERVE, -1, 0);
   while (addr != MAP_FAILED) {
     munmap(addr, mmap_size);
     mmap_size <<= 1;
-    addr = mmap64(0, mmap_size, PROT_NONE,
+    addr = MMAP_WRAPPER(0, mmap_size, PROT_NONE,
       MAP_PRIVATE | MAP_ANONYMOUS | MAP_NORESERVE, -1, 0);
   }
   mmap_size >>= 1;
   size_per_space = mmap_size / max_nr;
-  g_virt_space.addr_start = mmap64(0, mmap_size, PROT_NONE,
+  g_virt_space.addr_start = MMAP_WRAPPER(0, mmap_size, PROT_NONE,
     MAP_PRIVATE | MAP_ANONYMOUS | MAP_NORESERVE, -1, 0);
   if (g_virt_space.addr_start == MAP_FAILED) {
     perror("LIMIT MMAP failed");
