@@ -15,6 +15,10 @@ Probably it can not be compiled by compilers other than GCC.
 The operation was checked only on Linux Kernel version 3.13.0, so
 it may not work with other versions.
 
+In order to compile the kernel module, you may have to install header files in
+`/lib/modules`. These can be installed using a package management system such
+as `apt`.
+
 ## Usage
 
 First, kernel module should be compiled and inserted to the system.
@@ -57,6 +61,15 @@ gcc -I./include -o sample sample.c virtual_multiheap_fit.a -lm
 ```
 
 ## Notes
+
+So many mappings can be created in
+the kernel module of Virtual Multiheap-fit, so the number of it may exceed
+the maximum number.
+The maximum number of maps a process can make is written in the file
+`/proc/sys/vm/max_map_count`.
+
+In order to avoid this, add `vm.max_map_count = <huge number>` to
+the file `/etc/sysctl.conf` and type `sudo sysctl -p` to refrect these changes.
 
 For brevity of code, we do not assign a block number(bid) during `vmf_allocate`.
 Therefore, it is necessary for the user to determine whether each block number
