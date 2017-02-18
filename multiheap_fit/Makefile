@@ -1,6 +1,5 @@
 CC      = gcc
 CFLAGS  = -O3 -I./src -I./include -Wall -MMD -MP
-CFLAGS += -fopenmp
 CFLAGS += -DNDEBUG
 SRC_DIR = ./src
 OBJ_DIR = ./obj
