@@ -50,10 +50,10 @@
 #endif
 #if !EXACT_SIZE_CLASS
 #  ifndef SIZE_CLASS_MAX
-#    define SIZE_CLASS_MAX 128
+#    define SIZE_CLASS_MAX 64
 #  endif
 #  ifndef BINARY_SEARCH_COUNT
-#    define BINARY_SEARCH_COUNT 7
+#    define BINARY_SEARCH_COUNT 6
 #  endif
 #  ifndef SIZE_CLASS_CONST
 #    define SIZE_CLASS_CONST 0.125

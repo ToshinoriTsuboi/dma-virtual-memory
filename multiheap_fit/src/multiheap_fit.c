@@ -62,10 +62,10 @@
 #endif
 #if !EXACT_SIZE_CLASS
 #  ifndef SIZE_CLASS_MAX
-#    define SIZE_CLASS_MAX 128
+#    define SIZE_CLASS_MAX 64
 #  endif
 #  ifndef BINARY_SEARCH_COUNT
-#    define BINARY_SEARCH_COUNT 7
+#    define BINARY_SEARCH_COUNT 6
 #  endif
 #  ifndef SIZE_CLASS_CONST
 #    define SIZE_CLASS_CONST 0.125
@@ -104,7 +104,7 @@
 #    define GARBAGE_NUM_MAX 6
 #  endif
 #  ifndef EXTRA_PAGE_RATE
-#    define EXTRA_PAGE_RATE 5 / 4
+#    define EXTRA_PAGE_RATE 9 / 8
 #  endif
 #endif
 
@@ -581,17 +581,17 @@ struct virt_space {
   size_t size_per_space;
 
 #if ENABLE_HEURISTIC
-  /* pool_header list(centinel) */
+  /* pool_header list(sentinel) */
   struct pool_header pool_head_buf[2];
   /* Pool header list */
-  struct pool_header* pool_centinel;
+  struct pool_header* pool_sentinel;
   /* Total pool page num */
   size_t pool_num;
 
-  /* Garbage_header list(centinel) */
+  /* Garbage_header list(sentinel) */
   struct garbage_header garbage_head_buf[2];
   /* Garbage header list */
-  struct garbage_header* garbage_centinel;
+  struct garbage_header* garbage_sentinel;
   /* Total garbage page num */
   size_t garbage_num;
 #endif /* ENABLE_HEURISTIC */
@@ -611,7 +611,7 @@ MF_INLINE void virt_space_final(void);
 
 #if ENABLE_HEURISTIC
 #define IS_POOL_EMPTY() \
-  (g_virt_space.pool_centinel->next == g_virt_space.pool_centinel->prev)
+  (g_virt_space.pool_sentinel->next == g_virt_space.pool_sentinel->prev)
 
 /** Insert pool */
 MF_INLINE void pool_push(struct pool_header* inserted);
@@ -670,15 +670,15 @@ MF_INLINE void pheap_first_reserve(size_t max_nr) {
     exit(EXIT_FAILURE);
   }
 
-  /* initialize centinel */
+  /* initialize sentinel */
 #if ENABLE_HEURISTIC
-  g_virt_space.pool_centinel = &g_virt_space.pool_head_buf[1];
+  g_virt_space.pool_sentinel = &g_virt_space.pool_head_buf[1];
   g_virt_space.pool_head_buf[0].prev = &g_virt_space.pool_head_buf[1];
   g_virt_space.pool_head_buf[0].next = &g_virt_space.pool_head_buf[1];
   g_virt_space.pool_head_buf[1].prev = &g_virt_space.pool_head_buf[0];
   g_virt_space.pool_head_buf[1].next = &g_virt_space.pool_head_buf[0];
   g_virt_space.pool_num = 0;
-  g_virt_space.garbage_centinel = &g_virt_space.garbage_head_buf[1];
+  g_virt_space.garbage_sentinel = &g_virt_space.garbage_head_buf[1];
   g_virt_space.garbage_head_buf[0].prev = &g_virt_space.garbage_head_buf[1];
   g_virt_space.garbage_head_buf[0].next = &g_virt_space.garbage_head_buf[1];
   g_virt_space.garbage_head_buf[1].prev = &g_virt_space.garbage_head_buf[0];
@@ -706,27 +706,27 @@ MF_INLINE void virt_space_final(void) {
 
 #if ENABLE_HEURISTIC
 MF_INLINE void pool_push(struct pool_header* inserted) {
-  struct pool_header* last_pool_centinel = g_virt_space.pool_centinel->prev;
+  struct pool_header* last_pool_sentinel = g_virt_space.pool_sentinel->prev;
 
   if (g_virt_space.pool_num > POOL_NUM_THRESHOLD) {
     safe_zero_mmap(inserted, inserted->page_num << g_page_shift);
     g_virt_space.addrs[g_virt_space.addr_nr++] = (void*)inserted;
   } else {
-    inserted->prev = last_pool_centinel->prev;
-    last_pool_centinel->prev->next = inserted;
-    last_pool_centinel->prev = inserted;
-    inserted->next = last_pool_centinel;
+    inserted->prev = last_pool_sentinel->prev;
+    last_pool_sentinel->prev->next = inserted;
+    last_pool_sentinel->prev = inserted;
+    inserted->next = last_pool_sentinel;
     g_virt_space.pool_num += inserted->page_num;
   }
 }
 
 MF_INLINE struct pool_header* pool_top(void) {
-  struct pool_header* first_pool_centinel = g_virt_space.pool_centinel;
-  struct pool_header* ret_pool = first_pool_centinel->next;
+  struct pool_header* first_pool_sentinel = g_virt_space.pool_sentinel;
+  struct pool_header* ret_pool = first_pool_sentinel->next;
 
   assert(!IS_POOL_EMPTY());
-  first_pool_centinel->next = ret_pool->next;
-  ret_pool->next->prev = first_pool_centinel;
+  first_pool_sentinel->next = ret_pool->next;
+  ret_pool->next->prev = first_pool_sentinel;
   g_virt_space.pool_num -= ret_pool->page_num;
   return ret_pool;
 }
@@ -736,22 +736,22 @@ MF_INLINE size_t pool_get_size(void) {
 }
 
 MF_INLINE void garbage_push(struct garbage_header* inserted) {
-  struct garbage_header* centinel = g_virt_space.garbage_centinel;
+  struct garbage_header* sentinel = g_virt_space.garbage_sentinel;
   struct garbage_header* removed;
 
   /* If there are too many garbage pages, remove the head garbage page */
   if (g_virt_space.garbage_num + inserted->page_num > GARBAGE_NUM_MAX) {
-    removed = centinel->prev->prev;
-    if (removed != centinel) {
+    removed = sentinel->prev->prev;
+    if (removed != sentinel) {
       garbage_delete(removed);
     }
   }
 
   /* insert to the list */
-  centinel->next->prev = inserted;
-  inserted->next = centinel->next;
-  inserted->prev = centinel;
-  centinel->next = inserted;
+  sentinel->next->prev = inserted;
+  inserted->next = sentinel->next;
+  inserted->prev = sentinel;
+  sentinel->next = inserted;
   g_virt_space.garbage_num += inserted->page_num;
 }
 
