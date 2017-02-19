@@ -1603,6 +1603,7 @@ vmf_t vmf_init(size_t mem_min, size_t mem_max,
   vmf_main->page_info = page_info_init(page_byte, ofs_byte);
 #endif /* FIXED_LENGTH_INTEGER */
 
+#ifdef ENABLE_HEURISTIC
   if (vmf_main->block_nr_max > 1) {
     /* The first memcpy is very time consuming, so input
        is given such that memcpy occurs. */
@@ -1612,6 +1613,7 @@ vmf_t vmf_init(size_t mem_min, size_t mem_max,
     vmf_deallocate(vmf_main, 0);
     vmf_deallocate(vmf_main, 1);
   }
+#endif /* ENABLE_HEURISTIC */
 
   return (vmf_t) vmf_main;
 }

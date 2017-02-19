@@ -62,10 +62,10 @@
 #endif
 #if !EXACT_SIZE_CLASS
 #  ifndef SIZE_CLASS_MAX
-#    define SIZE_CLASS_MAX 64
+#    define SIZE_CLASS_MAX 128
 #  endif
 #  ifndef BINARY_SEARCH_COUNT
-#    define BINARY_SEARCH_COUNT 6
+#    define BINARY_SEARCH_COUNT 7
 #  endif
 #  ifndef SIZE_CLASS_CONST
 #    define SIZE_CLASS_CONST 0.125
@@ -1164,6 +1164,7 @@ mf_t mf_init(size_t mem_min, size_t mem_max, size_t elem_nr_max,
     mf_main->block_managers[sc - sc_min] = block_manager_init(sc2size(sc) + id_byte);
   }
 
+#if ENABLE_HEURISTIC
   if (mf_main->elem_nr_max > 1) {
     /* The first memcpy is very time consuming, so input
        is given such that memcpy occurs. */
@@ -1173,6 +1174,7 @@ mf_t mf_init(size_t mem_min, size_t mem_max, size_t elem_nr_max,
     mf_deallocate(mf_main, 0);
     mf_deallocate(mf_main, 1);
   }
+#endif /* ENABLE_HEURISTIC */
 
   return (mf_t) mf_main;
 }
