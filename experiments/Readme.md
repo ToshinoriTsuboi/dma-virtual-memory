@@ -72,8 +72,8 @@ The following is sample code for measuring memory consumption required for
 ## Notes
 
 `malloc.h` and `malloc.c` are written by Doug Lea (available
-[here](ftp://g.oswego.edu/pub/misc/malloc.c) and
-[here](ftp://g.oswego.edu/pub/misc/malloc.h)).
+[here](http://g.oswego.edu/pub/misc/malloc.c) and
+[here](http://g.oswego.edu/pub/misc/malloc.h)).
 
 Our code supports [TLSF](http://www.gii.upv.es/tlsf/main/repo) and
 [Compact-fit](http://tiptoe.cs.uni-salzburg.at/compact-fit/).
