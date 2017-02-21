@@ -1,0 +1,11 @@
+--- tlsf.c	2017-02-17 16:30:25.661736223 +0900
++++ tlsf.c	2017-02-17 16:30:39.121736075 +0900
+@@ -161,7 +161,7 @@
+ #define PREV_USED	(0x0)
+ 
+ 
+-#define DEFAULT_AREA_SIZE (1024*10)
++#define DEFAULT_AREA_SIZE (1024*1024*512)
+ 
+ #ifdef USE_MMAP
+ #define PAGE_SIZE (getpagesize())

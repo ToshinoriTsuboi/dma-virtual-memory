@@ -1,0 +1,13 @@
+--- /home/meip-users/Downloads/compact-fit-0.9/cf.h	2008-05-16 05:09:52.000000000 +0900
++++ ./cf.h	2017-02-17 16:56:12.041719244 +0900
+@@ -92,5 +92,10 @@
+  */
+ void cf_print_abstract_address_space();
+ 
++/**
++ * print memory amount used in TLSF allocator
++ */
++size_t cf_get_using_size();
++
+ #endif /*CF_H_*/
+ 

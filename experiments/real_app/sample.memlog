@@ -1,0 +1,4 @@
+# Sample memlog
+m 0 1024
+m 1 1024
+F 0

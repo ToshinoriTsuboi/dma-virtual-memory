@@ -1,0 +1,27 @@
+--- /home/meip-users/Downloads/compact-fit-0.9/cf.c	2017-01-27 14:49:31.275241318 +0900
++++ ./cf.c	2017-02-17 16:56:48.293718846 +0900
+@@ -1377,3 +1377,24 @@
+ void cf_print_pages_status(){
+ 	print_pages_status();
+ } 
++
++static inline size_t count_free_list(void) {
++  struct free_list *tmp;
++  struct free_list** fl = &pages_free_list;
++  uint32_t i;
++
++  tmp = *fl;
++
++  i = 0;
++  while(tmp!=NULL){
++    tmp = tmp->fl;
++    i++;
++  }
++  return i;
++}
++
++size_t cf_get_using_size() {
++  return memory_size
++    - nr_max_page_blocks * sizeof(void*)
++    - count_free_list() * sizeof(struct page);
++}
