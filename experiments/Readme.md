@@ -1,6 +1,7 @@
 # Experiments
 
-Numerical experiments for measuring X and Y performance
+Numerical experiments for measuring Multiheap-fit and Virtual Multiheap-fit
+performance
 
 **This repository is for experimental use, so it may contain some dangerous code.
 Use this repository at your own risk.**
@@ -92,7 +93,7 @@ By doing the above operation, TLSF is automatically enabled.
 
 Download and decompress
 [compact-fit-0.9.tar.gz](http://tiptoe.cs.uni-salzburg.at/compact-fit/).
-Then, copy `arch_dep.h`, `cf.h` and `cf.c` in `compact-fit-0.9` 
+Then, copy `arch_dep.h`, `cf.h` and `cf.c` in `compact-fit-0.9`
 to `experiments/src`. Finally, apply the patch `cf.h.patch` and `cf.c.patch`.
 
 By doing the above operation, Compact-fit is automatically enabled.
