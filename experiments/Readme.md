@@ -71,6 +71,9 @@ The following is sample code for measuring memory consumption required for
 
 ## Notes
 
+As noted in `virtual_multiheap_fit/Readme.md`, kernel module inserting
+should be done every time OS is restarted to test Virtual Multiheap-fit.
+
 `malloc.h` and `malloc.c` are written by Doug Lea (available
 [here](http://g.oswego.edu/pub/misc/malloc.c) and
 [here](http://g.oswego.edu/pub/misc/malloc.h)).
@@ -87,6 +90,16 @@ Download and decompress
 copy `target.h`, `tlsf.h` and `tlsf.c` in `TLSF-2.4.6/src` to `experiments/src`.
 Finally, apply the patch `tlsf.c.patch`.
 
+```sh
+wget http://wks.gii.upv.es/tlsf/files/src/TLSF-2.4.6.tbz2
+tar xvf TLSF-2.4.6.tbz2
+pushd TLSF-2.4.6/src
+cp target.h tlsf.h tlsf.c ../../src
+popd
+patch -u src/tlsf.c < src/tlsf.c.patch
+rm -rf TLSF-2.4.6 TLSF-2.4.6.tbz2
+```
+
 By doing the above operation, TLSF is automatically enabled.
 
 ### Compact-fit
@@ -95,5 +108,16 @@ Download and decompress
 [compact-fit-0.9.tar.gz](http://tiptoe.cs.uni-salzburg.at/compact-fit/).
 Then, copy `arch_dep.h`, `cf.h` and `cf.c` in `compact-fit-0.9`
 to `experiments/src`. Finally, apply the patch `cf.h.patch` and `cf.c.patch`.
+
+```sh
+wget http://tiptoe.cs.uni-salzburg.at/downloads/compact-fit-0.9.tar.gz
+tar xvf compact-fit-0.9.tar.gz
+pushd compact-fit-0.9
+cp arch_dep.h cf.h cf.c ../src
+popd
+patch -u src/cf.h < src/cf.h.patch
+patch -u src/cf.c < src/cf.c.patch
+rm -rf compact-fit-0.9 compact-fit-0.9.tar.gz
+```
 
 By doing the above operation, Compact-fit is automatically enabled.
