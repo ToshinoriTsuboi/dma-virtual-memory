@@ -1,5 +1,5 @@
 CC      = gcc
-CFLAGS  = -Wall -MMD -MP
+CFLAGS  = -Wall -MMD -MP -std=c99
 CFLAGS += -I./include
 SRC_DIR = ./src
 OBJ_DIR = ./obj

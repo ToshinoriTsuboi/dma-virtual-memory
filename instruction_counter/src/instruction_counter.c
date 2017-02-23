@@ -25,6 +25,7 @@
 #include <unistd.h>
 #include <stdbool.h>
 #include <string.h>
+#include <stdio.h>
 #include "internal.h"
 #include "instruction_counter.h"
 
@@ -54,14 +55,13 @@ void instruction_count_set_string(const char* str) {
   }
 
   if (i == 0) {
-    strcpy(buf, "COUNT");
+    snprintf(buf, sizeof(buf), "COUNT");
     i = sizeof("COUNT") + 1;
   } else {
     buf[i] = '\0';
   }
 
-  strcpy(out_str, NAME_STRING);
-  strcat(out_str, buf);
+  snprintf(out_str, sizeof(out_str), "%s%s", NAME_STRING, buf);
 
   size = write(PIPE_FD, out_str, sizeof(NAME_STRING) - 1 + i);
   if (size != sizeof(NAME_STRING) - 1 + i) exit(EXIT_FAILURE);

@@ -33,7 +33,8 @@ int allocate_page(address_vector_t* vector_ptr, size_t index) {
   void* page_address;
 
   if (get_addr_vec(vector_ptr, index) != NULL) return 0;
-  page_address = (void*) __get_free_pages(GFP_HIGHUSER, vector_ptr->pagesize_order);
+  page_address =
+      (void*) __get_free_pages(GFP_HIGHUSER, vector_ptr->pagesize_order);
   if (page_address == NULL) {
     printk(KERN_ALERT "%s: __get_free_page failed\n", __FUNCTION__);
     return -ENOMEM;

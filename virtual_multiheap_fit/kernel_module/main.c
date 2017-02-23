@@ -63,7 +63,7 @@ static int cdev_open(struct inode* inode_ptr, struct file* file_ptr);
 static int cdev_release(struct inode* inode_ptr, struct file* file_ptr);
 static long cdev_unlocked_ioctl(struct file* file_ptr,
   unsigned int cmd, unsigned long arg);
-static int cdev_mmap (struct file* file_ptr, struct vm_area_struct* vma_ptr);
+static int cdev_mmap(struct file* file_ptr, struct vm_area_struct* vma_ptr);
 
 /* determine whether the command(cmd) is legal (as a argument of 'ioctl').
   If the command is legal, it returns 0 and if not, it returns non-0 value. */
@@ -205,10 +205,10 @@ static long cdev_unlocked_ioctl(struct file* file_ptr,
     break;
   }
 
-  return err_code ;
+  return err_code;
 }
 
-static int cdev_mmap (struct file* file_ptr, struct vm_area_struct* vma_ptr) {
+static int cdev_mmap(struct file* file_ptr, struct vm_area_struct* vma_ptr) {
   /* The offset value of the file matches the page number */
   unsigned long page_id;
   address_vector_t* vector_ptr
@@ -229,7 +229,8 @@ static int cdev_mmap (struct file* file_ptr, struct vm_area_struct* vma_ptr) {
   while (vm_start < vm_end) {
     page_addr = get_addr_vec(vector_ptr, page_id);
     if (page_addr == NULL) {
-      printk(KERN_ALERT "%s: page not found(page %ld)\n", __FUNCTION__, page_id);
+      printk(KERN_ALERT "%s: page not found(page %ld)\n",
+          __FUNCTION__, page_id);
       return -ENODATA;
     }
 

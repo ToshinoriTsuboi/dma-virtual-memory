@@ -276,7 +276,7 @@ typedef struct elem_info {
 #  define ELEM_INFO_END(ptr, l, o)\
     ((void*)((uint8_t*)ELEM_INFO_OFFSET(ptr, l) + o))
 #  define ELEM_INFO_SIZE(l, o)\
-    ((size_t)(ELEM_INFO_END(0,l,o) - ELEM_INFO_BEGIN(0)))
+    ((size_t)(ELEM_INFO_END(0, l, o) - ELEM_INFO_BEGIN(0)))
 #endif /* FIXED_LENGTH_INTEGER */
 
 typedef struct {
@@ -391,7 +391,7 @@ MF_INLINE void* safe_malloc(size_t size) {
 /* ========================================================================== */
 
 MF_INLINE bytenum_t required_bit(uint64_t num) {
-  bytenum_t bit_size ;
+  bytenum_t bit_size;
 
   if (num > 1) {
 #ifdef __GNUC__
@@ -477,7 +477,8 @@ MF_INLINE void put_int(void* output, bytenum_t byte_num, uint64_t input) {
 }
 #endif /* FIXED_LENGTH_INTEGER */
 
-MF_INLINE void my_memcpy(void* __restrict__ dst, const void *__restrict__ src, size_t size) {
+MF_INLINE void my_memcpy(void* __restrict__ dst, const void *__restrict__ src,
+    size_t size) {
   uint8_t* __restrict__ dst_u8 = (uint8_t* __restrict__)dst;
   const uint8_t* __restrict__ src_u8 = (const uint8_t* __restrict__)src;
 
@@ -638,7 +639,7 @@ MF_INLINE void pheap_first_reserve(size_t max_nr) {
   if (g_page_size == 0) {
     g_page_size  = getpagesize();
     g_page_mask  = g_page_size - 1;
-    g_page_shift = 8 * sizeof(unsigned long long) - __builtin_clzll(g_page_size) - 1;
+    g_page_shift = 8 * sizeof(uint64_t long long) - __builtin_clzll(g_page_size) - 1;
   }
 
   if (g_virt_space.initialized) {

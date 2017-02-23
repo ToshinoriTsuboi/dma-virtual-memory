@@ -70,7 +70,7 @@ int main(int argc, char* argv[]) {
     case COMMAND_REALLOCATE_M:
       reallocate_measure_funcs[allocator](idx, size); break;
     default:
-      ; /* pass */
+      {} /* pass */
     }
   }
 

@@ -58,7 +58,8 @@ int put_addr_vec(address_vector_t* vector_ptr, size_t index, void* addr);
 void* get_addr_vec(address_vector_t* vector_ptr, size_t index);
 /** Return the amount of memory used in 'vector_ptr'. */
 size_t get_size_addr_vec(address_vector_t* vector_ptr);
-/** Set physical pagesize. Pagesize can be changed only if the array is empty. */
+/** Set physical pagesize.
+  Pagesize can be changed only if the array is empty. */
 int set_pagesize_order(address_vector_t* vector_ptr, unsigned pagesize_order);
 /** Get order of current physical pagesize. */
 unsigned get_pagesize_order(address_vector_t* vector_ptr);

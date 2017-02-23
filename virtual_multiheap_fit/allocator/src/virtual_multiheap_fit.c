@@ -244,7 +244,8 @@ typedef struct {
 #define ELEMENT_BLOCK_END_OFS(ptr, o, l)\
   (void*)((uint8_t*)ELEMENT_BLOCK_PAGE_OFS(ptr, o) + l)
 #define ELEMENT_BLOCK_SIZE(o, l)\
-  ((uint8_t*)ELEMENT_BLOCK_END_OFS(0, o, l) - (uint8_t*)ELEMENT_BLOCK_START_OFS(0))
+  ((uint8_t*)ELEMENT_BLOCK_END_OFS(0, o, l) \
+    - (uint8_t*)ELEMENT_BLOCK_START_OFS(0))
 #endif /* FIXED_LENGTH_INTEGER */
 
 typedef struct {
@@ -575,7 +576,8 @@ VMF_INLINE size_t align_up(size_t size) {
   return (size + MEMORY_ALIGN - 1) & ~(MEMORY_ALIGN - 1);
 }
 
-VMF_INLINE void my_memcpy(void* __restrict__ dst, const void* __restrict__ src, size_t size) {
+VMF_INLINE void my_memcpy(void* __restrict__ dst, const void* __restrict__ src,
+    size_t size) {
   uint8_t* __restrict__ dst_u8 = (uint8_t* __restrict__) dst;
   const uint8_t* __restrict__ src_u8 = (const uint8_t* __restrict__) src;
   do {
@@ -766,7 +768,8 @@ VMF_INLINE void my_mmap(module_t* module, size_t index, pageid_t pid) {
   void* addr = mmap64(
       get_address_by_index(module, index),
       module->physical_pagesize, PROT_READ | PROT_WRITE,
-      MAP_SHARED | MAP_FIXED, module->driver_fd, pid * module->physical_pagesize);
+      MAP_SHARED | MAP_FIXED, module->driver_fd,
+      pid * module->physical_pagesize);
   if (addr == MAP_FAILED) {
     perror(__FUNCTION__);
     exit(EXIT_FAILURE);
@@ -857,8 +860,8 @@ VMF_INLINE size_t pheap_get_size(const pseudo_heap_t* pheap) {
 #if FIXED_LENGTH_INTEGER
 VMF_INLINE block_info_t* block_info_init(size_t block_nr_max)
 #else  /* FIXED_LENGTH_INTEGER */
-VMF_INLINE block_info_t* block_info_init(bytenum_t ofs_byte, bytenum_t page_byte,
-    size_t block_nr_max)
+VMF_INLINE block_info_t* block_info_init(bytenum_t ofs_byte,
+    bytenum_t page_byte, size_t block_nr_max)
 #endif /* FIXED_LENGTH_INTEGER */
 {
   block_info_t* block_info;
@@ -1236,9 +1239,11 @@ VMF_INLINE pageid_t page_info_pop_freeid(page_info_t* page_info,
     *mapping = false;
     ret_id = page_info->page_num++;
 #if FIXED_LENGTH_INTEGER
-    pheap_resize(page_info->data_heap, page_info->page_num * sizeof(page_data_t));
+    pheap_resize(page_info->data_heap,
+      page_info->page_num * sizeof(page_data_t));
 #else  /* FIXED_LENGTH_INTEGER */
-    pheap_resize(page_info->data_heap, page_info->page_num * page_info->block_size);
+    pheap_resize(page_info->data_heap,
+      page_info->page_num * page_info->block_size);
 #endif /* FIXED_LENGTH_INTEGER */
     return ret_id;
   }
@@ -1654,7 +1659,8 @@ void vmf_allocate(vmf_t vmf, blockid_t bid, size_t length) {
   {
     /* If head page is null page, new page should be inserted there */
     page_offset = vmf_main->physical_pagesize - real_size;
-    page_id = insert_page(vmf_main, head_addr, page_id, page_offset, size_class);
+    page_id = insert_page(vmf_main, head_addr,
+      page_id, page_offset, size_class);
   } else {
     page_offset = page_info_get_offset(vmf_main->page_info, page_id);
     if (page_offset >= real_size) {
@@ -1662,7 +1668,8 @@ void vmf_allocate(vmf_t vmf, blockid_t bid, size_t length) {
       page_info_put_offset(vmf_main->page_info, page_id, page_offset);
     } else {
       page_offset = page_offset + vmf_main->physical_pagesize - real_size;
-      page_id = insert_page(vmf_main, head_addr, page_id, page_offset, size_class);
+      page_id = insert_page(vmf_main, head_addr, page_id,
+          page_offset, size_class);
     }
   }
 
@@ -1718,7 +1725,8 @@ void vmf_deallocate(vmf_t vmf, blockid_t bid) {
 #else /* FIXED_LENGTH_INTEGER */
     headbid = get_int(headpage_block_addr, vmf_main->blockid_byte);
 #endif /* FIXED_LENGTH_INTEGER */
-    head_block_data_addr = block_info_get_block_ptr(vmf_main->block_info, headbid);
+    head_block_data_addr =
+      block_info_get_block_ptr(vmf_main->block_info, headbid);
 
 #if COPYLESS
 #if FIXED_LENGTH_INTEGER
@@ -1903,7 +1911,8 @@ VMF_INLINE void remove_page(vmf_main_t* vmf_main,
   void* removepage_block = headpage_block;
   pageid_t    removenext_id;
 
-  removenext_id = page_info_fast_get_next(vmf_main->page_info, removepage_block);
+  removenext_id =
+    page_info_fast_get_next(vmf_main->page_info, removepage_block);
 
 #if FIXED_LENGTH_INTEGER
   if (removenext_id != (pageid_t)(-1)) {

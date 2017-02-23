@@ -53,7 +53,7 @@ int main(int argc, char* argv[], char* envp[]) {
   char tag_name[256];
   int size;
 
-  strcpy(tag_name, "COUNT");
+  snprintf(tag_name, sizeof(tag_name), "COUNT");
 
   if (argc <= 1) {
     fprintf(stderr, "usage  %s program [program args]\n", argv[0]);
@@ -106,7 +106,8 @@ int main(int argc, char* argv[], char* envp[]) {
           if (counter_bias == BIAS_INIT_VALUE) {
             fprintf(stderr, "warning  iteration counter not initialized\n");
           } else {
-            fprintf(stderr, "%s\t%8" PRIu64 "\n", tag_name, iteration_count - counter_bias);
+            fprintf(stderr, "%s\t%8" PRIu64 "\n", tag_name,
+              iteration_count - counter_bias);
           }
           fflush(stderr);
         } else {
@@ -116,7 +117,8 @@ int main(int argc, char* argv[], char* envp[]) {
       } else if (strcmp(buffer, INIT_STRING) == 0) {
         is_initializing = true;
       } else if (strncmp(buffer, NAME_STRING, sizeof(NAME_STRING) - 1) == 0) {
-        strcpy(tag_name, buffer + sizeof(NAME_STRING) - 1);
+        snprintf(tag_name, sizeof(tag_name), "%s",
+          buffer + sizeof(NAME_STRING) - 1);
       }
     }
 

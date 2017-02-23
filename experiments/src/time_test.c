@@ -83,7 +83,8 @@ int main(int argc, char* argv[]) {
   elapsed_system =
     (int64_t)(end_usage.ru_stime.tv_sec - start_usage.ru_stime.tv_sec) * 1000000
     + (end_usage.ru_stime.tv_usec - start_usage.ru_stime.tv_usec);
-  printf("%s %" PRId64 " us user  %" PRId64 " us system  %" PRId64 " us total\n",
+  printf(
+    "%s %" PRId64 " us user  %" PRId64 " us system  %" PRId64 " us total\n",
     allocator_name[allocator],
     elapsed_user, elapsed_system, elapsed_user + elapsed_system);
 
