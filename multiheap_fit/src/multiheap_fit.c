@@ -639,7 +639,7 @@ MF_INLINE void pheap_first_reserve(size_t max_nr) {
   if (g_page_size == 0) {
     g_page_size  = getpagesize();
     g_page_mask  = g_page_size - 1;
-    g_page_shift = 8 * sizeof(uint64_t long long) - __builtin_clzll(g_page_size) - 1;
+    g_page_shift = 8 * sizeof(unsigned long long) - __builtin_clzll(g_page_size) - 1;
   }
 
   if (g_virt_space.initialized) {
