@@ -1761,9 +1761,15 @@ void vmf_reallocate(vmf_t vmf, blockid_t bid, size_t size) {
 
   if (size == 0) {
     vmf_deallocate(vmf_main, bid);
-  } else if (
-    (page_id = block_info_get_pid(vmf_main->block_info, bid))
-      == (pageid_t)(-1)) {
+  } else if
+#ifdef FIXED_LENGTH_INTEGER
+    ((page_id = block_info_get_pid(vmf_main->block_info, bid)) ==
+      (pageid_t)(-1))
+#else
+    ((page_id = block_info_get_pid(vmf_main->block_info, bid)) ==
+      vmf_main->null_page)
+#endif
+  {
     vmf_allocate(vmf_main, bid, size);
   } else {
     size = sc2size(size2sc(size));
