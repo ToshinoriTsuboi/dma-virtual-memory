@@ -52,6 +52,29 @@
 #define ALLOCATOR_MAX(x, y) ((x) > (y) ? (x) : (y))
 #define ALLOCATOR_MIN(x, y) ((x) < (y) ? (x) : (y))
 
+/* structure to store addresses and lengths of memory blocks. */
+typedef struct {
+  void** addrs;
+  size_t id_num;
+
+#if MEMORY_TEST
+  void*   addr_min;
+  void*   addr_max;
+  size_t* lens;
+#endif /* MEMORY_TEST */
+} block_info_t;
+
+static block_info_t g_binfo;
+static inline void* ptr_diff(void* addr, ptrdiff_t diff);
+static inline void binfo_init(size_t id_num);
+static inline void binfo_malloc(size_t idx, void* addr, size_t len);
+static inline void binfo_free(size_t idx);
+static inline void binfo_realloc(size_t idx, void* new_addr, size_t new_len);
+static inline void* binfo_dereference(size_t idx);
+#if MEMORY_TEST
+static inline size_t binfo_getsize(void);
+#endif /* MEMORY_TEST */
+
 /* Multiheap-fit */
 static mf_t mf;
 static void init_mf(size_t mem_min, size_t mem_max,
@@ -148,35 +171,39 @@ static void NO_OPTIMIZE reallocate_measure_vmf(size_t idx, size_t size) {
 
 /* DLmalloc */
 static mspace msp;
-void** dl_addrs;
 static void init_dl(size_t mem_min, size_t mem_max,
     size_t id_num, size_t require_size) {
   msp = create_mspace(0, 0);
-  dl_addrs = malloc(sizeof(void*) * id_num);
-  if (dl_addrs == NULL) {
-    perror("malloc");
-    exit(EXIT_FAILURE);
-  }
+  binfo_init(id_num);
 }
 
 static void allocate_dl(size_t idx, size_t size) {
-  dl_addrs[idx] = mspace_malloc(msp, size);
+  void* addr = mspace_malloc(msp, size);
+  binfo_malloc(idx, addr, size);
 }
 
 static void deallocate_dl(size_t idx) {
-  mspace_free(msp, dl_addrs[idx]);
+  void* addr = binfo_dereference(idx);
+  mspace_free(msp, addr);
+  binfo_free(idx);
 }
 
 static void reallocate_dl(size_t idx, size_t size) {
-  dl_addrs[idx] = mspace_realloc(msp, dl_addrs[idx], size);
+  void* old_addr = binfo_dereference(idx);
+  void* new_addr = mspace_realloc(msp, old_addr, size);
+  binfo_realloc(idx, new_addr, size);
 }
 
 static void* dereference_dl(size_t idx) {
-  return dl_addrs[idx];
+  return binfo_dereference(idx);
 }
 
 static size_t getsize_dl(void) {
+#if !MEMORY_TEST
   return mspace_footprint(msp);
+#else
+  return binfo_getsize();
+#endif
 }
 
 #ifdef INSTRUCTION_COUNTER_ENABLE
@@ -185,114 +212,65 @@ static void NO_OPTIMIZE allocate_measure_dl(size_t idx, size_t size) {
   instruction_count_start();
   addr = mspace_malloc(msp, size);
   instruction_count_end();
-  dl_addrs[idx] = addr;
+
+  binfo_malloc(idx, addr, size);
 }
 
 static void NO_OPTIMIZE deallocate_measure_dl(size_t idx) {
-  void* addr = dl_addrs[idx];
+  void* addr = binfo_dereference(idx);
   instruction_count_start();
   mspace_free(msp, addr);
   instruction_count_end();
+
+  binfo_free(idx);
 }
 
 static void NO_OPTIMIZE reallocate_measure_dl(size_t idx, size_t size) {
-  void* addr = dl_addrs[idx];
+  void* old_addr = binfo_dereference(idx);
+  void* new_addr;
   instruction_count_start();
-  addr = mspace_realloc(msp, addr, size);
+  new_addr = mspace_realloc(msp, old_addr, size);
   instruction_count_end();
-  dl_addrs[idx] = addr;
+
+  binfo_realloc(idx, new_addr, size);
 }
 #endif /* INSTRUCTION_COUNTER_ENABLE */
 
 #ifdef ENABLE_TLSF
 /* TLSF */
-void** tlsf_addrs;
-#if MEMORY_TEST
-size_t* tlsf_sizes;
-void*  tlsf_addr_min = (void*)(-1);
-void*  tlsf_addr_max = NULL;
-size_t tlsf_id_num;
-#endif /* MEMORY_TEST */
-
 static void init_tlsf(size_t mem_min, size_t mem_max,
     size_t id_num, size_t require_size) {
-  tlsf_addrs = malloc(sizeof(void*) * id_num);
-  if (tlsf_addrs == NULL) {
-    perror("malloc");
-    exit(EXIT_FAILURE);
-  }
-  memset(tlsf_addrs, 0, sizeof(void*) * id_num);
+  void* addr;
+  binfo_init(id_num);
 
-#if MEMORY_TEST
-  tlsf_id_num = id_num;
-  tlsf_sizes = malloc(sizeof(size_t) * id_num);
-  if (tlsf_sizes == NULL) {
-    perror("malloc");
-    exit(EXIT_FAILURE);
-  }
-  memset(tlsf_sizes, 0, sizeof(size_t) * id_num);
-#endif /* MEMORY_TEST */
+  addr = tlsf_malloc(1024);
+  tlsf_free(addr);
 }
 
 static void allocate_tlsf(size_t idx, size_t size) {
-  tlsf_addrs[idx] = tlsf_malloc(size);
-#if MEMORY_TEST
-  tlsf_sizes[idx] = size;
-  tlsf_addr_min = ALLOCATOR_MIN(tlsf_addr_min, tlsf_addrs[idx]);
-  tlsf_addr_max = ALLOCATOR_MAX(tlsf_addr_max,
-      (void*)((uint8_t*)tlsf_addrs[idx] + size));
-#endif
+  void* addr = tlsf_malloc(size);
+  binfo_malloc(idx, addr, size);
 }
 
 static void deallocate_tlsf(size_t idx) {
-#if MEMORY_TEST
-  size_t i;
-  size_t size = tlsf_sizes[idx];
-
-  tlsf_sizes[idx] = 0;
-  if (tlsf_addr_max == (uint8_t*)tlsf_addrs[idx] + size) {
-    for (i = 0; i < tlsf_id_num; ++i) {
-      if (tlsf_sizes[i] > 0) {
-        tlsf_addr_max = ALLOCATOR_MAX(tlsf_addr_max,
-          (void*)((uint8_t*)tlsf_addrs[idx] + tlsf_sizes[i]));
-      }
-    }
-  }
-#endif
-  tlsf_free(tlsf_addrs[idx]);
+  void* addr = binfo_dereference(idx);
+  tlsf_free(addr);
+  binfo_free(idx);
 }
 
 static void reallocate_tlsf(size_t idx, size_t size) {
-#if MEMORY_TEST
-  size_t i;
-
-  tlsf_sizes[idx] = 0;
-  if (tlsf_addr_max == (uint8_t*)tlsf_addrs[idx] + tlsf_sizes[idx]) {
-    for (i = 0; i < tlsf_id_num; ++i) {
-      if (tlsf_sizes[i] > 0) {
-        tlsf_addr_max = ALLOCATOR_MAX(tlsf_addr_max,
-          (void*)((uint8_t*)tlsf_addrs[idx] + tlsf_sizes[i]));
-      }
-    }
-  }
-#endif /* MEMORY_TEST */
-
-  tlsf_addrs[idx] = tlsf_realloc(tlsf_addrs[idx], size);
-#if MEMORY_TEST
-  tlsf_sizes[idx] = size;
-  tlsf_addr_min = ALLOCATOR_MIN(tlsf_addr_min, tlsf_addrs[idx]);
-  tlsf_addr_max = ALLOCATOR_MAX(tlsf_addr_max,
-    (void*)((uint8_t*)tlsf_addrs[idx] + size));
-#endif /* MEMORY_TEST */
+  void* old_addr = binfo_dereference(idx);
+  void* new_addr = tlsf_realloc(old_addr, size);
+  binfo_realloc(idx, new_addr, size);
 }
 
 static void* dereference_tlsf(size_t idx) {
-  return tlsf_addrs[idx];
+  return binfo_dereference(idx);
 }
 
 static size_t getsize_tlsf(void) {
 #if MEMORY_TEST
-  return (uint8_t*)tlsf_addr_max - (uint8_t*)tlsf_addr_min;
+  return binfo_getsize() + tlsf_impl_overhead();
 #else
   return 0;
 #endif
@@ -304,22 +282,27 @@ static void NO_OPTIMIZE allocate_measure_tlsf(size_t idx, size_t size) {
   instruction_count_start();
   addr = tlsf_malloc(size);
   instruction_count_end();
-  tlsf_addrs[idx] = addr;
+
+  binfo_malloc(idx, addr, size);
 }
 
 static void NO_OPTIMIZE deallocate_measure_tlsf(size_t idx) {
-  void* addr = tlsf_addrs[idx];
+  void* addr = binfo_dereference(idx);
   instruction_count_start();
   tlsf_free(addr);
   instruction_count_end();
+
+  binfo_free(idx);
 }
 
 static void NO_OPTIMIZE reallocate_measure_tlsf(size_t idx, size_t size) {
-  void* addr = tlsf_addrs[idx];
+  void* old_addr = binfo_dereference(idx);
+  void* new_addr = binfo_dereference(idx);
   instruction_count_start();
-  addr = tlsf_realloc(tlsf_addrs[idx], size);
+  new_addr = tlsf_realloc(old_addr, size);
   instruction_count_end();
-  tlsf_addrs[idx] = addr;
+
+  binfo_realloc(idx, new_addr, size);
 }
 #endif /* INSTRUCTION_COUNTER_ENABLE */
 #endif /* ENABLE_TLSF */
@@ -331,7 +314,7 @@ void*** cf_addrs;
 size_t* cf_sizes;
 static void init_cf(size_t mem_min, size_t mem_max,
     size_t id_num, size_t require_size) {
-  size_t pool_size = (8 * require_size + 0x10000) & ~(0x10000 - 1);
+  size_t pool_size = (512 * 1024 * 1024);
 
 #ifdef MAP_32BIT
   cf_pool = mmap(NULL, pool_size, PROT_READ | PROT_WRITE,
@@ -517,3 +500,98 @@ const reallocate_t reallocate_measure_funcs[ALLOC_NB] = {
 #endif
 };
 #endif /* INSTRUCTION_COUNTER_ENABLE */
+
+static inline void* ptr_diff(void* addr, ptrdiff_t diff) {
+  return (void*)((uint8_t*)addr + diff);
+}
+
+static inline void binfo_init(size_t id_num) {
+  g_binfo.addrs  = (void**)calloc(sizeof(void*), id_num);
+  g_binfo.id_num = id_num;
+  if (g_binfo.addrs == NULL) {
+    perror("calloc");
+    exit(EXIT_FAILURE);
+  }
+
+#if MEMORY_TEST
+  g_binfo.addr_min = (void*)(-1);
+  g_binfo.addr_max = (void*)(0);
+  g_binfo.lens     = calloc(sizeof(size_t), id_num);
+  if (g_binfo.lens == NULL) {
+    perror("calloc");
+    exit(EXIT_FAILURE);
+  }
+#endif /* MEMORY_TEST */
+}
+
+static inline void binfo_malloc(size_t idx, void* addr, size_t len) {
+  g_binfo.addrs[idx] = addr;
+
+#if MEMORY_TEST
+  g_binfo.addr_min  = ALLOCATOR_MIN(g_binfo.addr_min, addr);
+  g_binfo.addr_max  = ALLOCATOR_MAX(g_binfo.addr_max, ptr_diff(addr, len));
+  g_binfo.lens[idx] = len;
+#endif /* MEMORY_TEST */
+}
+
+static inline void binfo_free(size_t idx) {
+#if MEMORY_TEST
+  size_t i;
+  void* new_addr_max;
+
+  if ((uint8_t*)g_binfo.addrs[idx] + g_binfo.lens[idx] == g_binfo.addr_max) {
+    new_addr_max = NULL;
+    for (i = 0; i < g_binfo.id_num; ++i) {
+      if (i == idx) continue;
+      if (g_binfo.addrs[i] == NULL) continue;
+      new_addr_max = ALLOCATOR_MAX(new_addr_max,
+        ptr_diff(g_binfo.addrs[i], g_binfo.lens[i]));
+    }
+    g_binfo.addr_max = new_addr_max;
+  }
+  g_binfo.addrs[idx] = NULL;
+  g_binfo.lens[idx]  = 0;
+#endif /* MEMORY_TEST */
+}
+
+static inline void binfo_realloc(size_t idx, void* new_addr, size_t new_len) {
+#if MEMORY_TEST
+  void* old_addr = g_binfo.addrs[idx];
+  void* new_addr_max;
+  size_t i;
+  if ((uint8_t*)old_addr + g_binfo.lens[idx] == g_binfo.addr_max) {
+    if (old_addr == new_addr) {
+      g_binfo.addr_max = ptr_diff(new_addr, new_len);
+    } else {
+      new_addr_max = NULL;
+      for (i = 0; i < g_binfo.id_num; ++i) {
+        if (i == idx) continue;
+        if (g_binfo.addrs[i] == NULL) continue;
+        new_addr_max = ALLOCATOR_MAX(new_addr_max,
+          ptr_diff(g_binfo.addrs[i], g_binfo.lens[i]));
+      }
+      g_binfo.addr_max = new_addr_max;
+    }
+  } else {
+    g_binfo.addr_max = ALLOCATOR_MAX(g_binfo.addr_max,
+      ptr_diff(new_addr, new_len));
+  }
+  g_binfo.lens[idx]  = new_len;
+#endif /* MEMORY_TEST */
+  g_binfo.addrs[idx] = new_addr;
+}
+
+static inline void* binfo_dereference(size_t idx) {
+  return g_binfo.addrs[idx];
+}
+
+#if MEMORY_TEST
+static inline size_t binfo_getsize(void) {
+  if (g_binfo.addr_max == (void*)(0) ||
+      g_binfo.addr_min == (void*)(-1)) {
+    return (size_t)0;
+  } else {
+    return (uint8_t*)g_binfo.addr_max - (uint8_t*)g_binfo.addr_min;
+  }
+}
+#endif /* MEMORY_TEST */

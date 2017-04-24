@@ -68,7 +68,7 @@
 #    define BINARY_SEARCH_COUNT 7
 #  endif
 #  ifndef SIZE_CLASS_CONST
-#    define SIZE_CLASS_CONST 0.125
+#    define SIZE_CLASS_CONST 0.1232
 #  endif
 #endif
 

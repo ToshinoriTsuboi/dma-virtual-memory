@@ -1,5 +1,5 @@
---- tlsf.c	2017-02-17 16:30:25.661736223 +0900
-+++ tlsf.c	2017-02-17 16:30:39.121736075 +0900
+--- ./TLSF-2.4.6/src/tlsf.c	2009-10-06 18:25:15.000000000 +0900
++++ ./src/tlsf.c	2017-04-24 16:44:47.164946940 +0900
 @@ -161,7 +161,7 @@
  #define PREV_USED	(0x0)
  
@@ -9,3 +9,11 @@
  
  #ifdef USE_MMAP
  #define PAGE_SIZE (getpagesize())
+@@ -1013,3 +1013,7 @@ void print_all_blocks(tlsf_t * tlsf)
+ }
+ 
+ #endif
++
++size_t tlsf_impl_overhead(void) {
++ return ROUNDUP_SIZE(sizeof(tlsf_t));
++}

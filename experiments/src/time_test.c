@@ -35,8 +35,8 @@ int main(int argc, char* argv[]) {
   size_t i;
   enum command_type type;
   size_t command_nr, idx, size;
-  struct rusage start_usage, end_usage;
-  int64_t elapsed_user, elapsed_system;
+  struct timeval start_tv, end_tv;
+  int64_t elapsed_time;
 
   if (argc < 3) {
     print_usage(argv[0]);
@@ -53,10 +53,7 @@ int main(int argc, char* argv[]) {
   init_funcs[allocator](memlog->mem_min, memlog->mem_max,
       memlog->block_max, memlog->require_size);
 
-  if (getrusage(RUSAGE_SELF, &start_usage) < 0) {
-    perror("getrusage");
-    exit(EXIT_FAILURE);
-  }
+  gettimeofday(&start_tv, NULL);
 
   command_nr = memlog->command_nr;
   for (i = 0; i < command_nr; ++i) {
@@ -72,21 +69,12 @@ int main(int argc, char* argv[]) {
     }
   }
 
-  if (getrusage(RUSAGE_SELF, &end_usage) < 0) {
-    perror("getrusage");
-    exit(EXIT_FAILURE);
-  }
 
-  elapsed_user =
-    (int64_t)(end_usage.ru_utime.tv_sec - start_usage.ru_utime.tv_sec) * 1000000
-    + (end_usage.ru_utime.tv_usec - start_usage.ru_utime.tv_usec);
-  elapsed_system =
-    (int64_t)(end_usage.ru_stime.tv_sec - start_usage.ru_stime.tv_sec) * 1000000
-    + (end_usage.ru_stime.tv_usec - start_usage.ru_stime.tv_usec);
-  printf(
-    "%s %" PRId64 " us user  %" PRId64 " us system  %" PRId64 " us total\n",
-    allocator_name[allocator],
-    elapsed_user, elapsed_system, elapsed_user + elapsed_system);
+  gettimeofday(&end_tv, NULL);
+  elapsed_time =
+    (int64_t)(end_tv.tv_sec - start_tv.tv_sec) * 1000000
+    + (end_tv.tv_usec - start_tv.tv_usec);
+  printf("%s %" PRId64 " us\n", allocator_name[allocator], elapsed_time);
 
   return EXIT_SUCCESS;
 }
